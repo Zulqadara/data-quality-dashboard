@@ -1,9 +1,12 @@
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 
-class DBSettings(BaseSettings):
+class Settings(BaseSettings):
     DATABASE_URL: str
-    class Config:
-        env_file = ".env"
 
-db_settings = DBSettings()
+    model_config = {
+        "env_file": ".env",
+        "extra": "ignore",
+    }
+
+settings = Settings()
