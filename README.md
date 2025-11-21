@@ -12,3 +12,7 @@ How to run frontend:
 
 uv run python -m app.frontend.main
 
+
+This project includes a Makefile for developer workflows, Docker
+images for backend and frontend. Terraform is provided to demonstrate
+infrastructure automation and AWS readiness.
