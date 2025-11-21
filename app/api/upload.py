@@ -8,6 +8,9 @@ from app.models.dataset import Dataset
 from app.models.dataset_column import DatasetColumn
 from app.services.data_reader import extract_columns
 
+from app.services.profiling import profile_dataset
+from app.models.dataset_profile import DatasetProfile
+
 router = APIRouter()
 
 
@@ -53,7 +56,23 @@ async def upload_dataset(file: UploadFile = File(...)):
                 session.add(DatasetColumn(
                     dataset_id=dataset.id,
                     name=col,
-                    data_type=None  # Day 3 will infer this
+                    data_type=None
+                ))
+
+            try:
+                profile_result = await profile_dataset(file_path)
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Profiling failed: {str(e)}")
+
+            dataset.row_count = profile_result["row_count"]
+
+            for col_profile in profile_result["profile"]:
+                session.add(DatasetProfile(
+                    dataset_id=dataset.id,
+                    column_name=col_profile["column_name"],
+                    inferred_type=col_profile["inferred_type"],
+                    missing_count=col_profile["missing_count"],
+                    unique_count=col_profile["unique_count"],
                 ))
 
             await session.commit()
@@ -69,5 +88,6 @@ async def upload_dataset(file: UploadFile = File(...)):
         "dataset_id": dataset.id,
         "filename": dataset.original_filename,
         "stored_file": stored_filename,
-        "columns": column_names
+        "columns": column_names,
+        "profile": profile_result["profile"],
     }
